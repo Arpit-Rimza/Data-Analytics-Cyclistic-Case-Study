@@ -1,0 +1,691 @@
+---
+title: 'Case Study: How Does a Bike-Share Navigate Speedy Success?'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+This is a capstone project as a part of the Google Data Analytics Professional Certificate course. The project involves using R programming language and RStudio IDE to analyse a dataset. The project follows six steps: Ask, Prepare, Process, Analyse, Share, and Act. These steps involve defining the problem or question to be answered, preparing and cleaning the data, analysing the data statistically and through visualisations, sharing the insights obtained from the analysis, and taking action based on those insights.
+
+
+# 1. Ask
+
+### Business Task:
+
+Design marketing strategies aimed at converting casual riders into annual members by analysing the Cyclistic historical bike trip data to identify trends and understand the differences between Annual Members and Casual Riders.
+
+### Key stakeholders:
+
+* Lily Moreno, Director of Marketing and manager of the marketing analyst team.
+* Cyclistic marketing analytics team, responsible for collecting, analyzing, and reporting data that helps guide Cyclistic marketing strategy.
+* Cyclistic executive team, who will decide whether to approve the recommended marketing program.
+* Cyclistic customers, both casual riders and annual members.
+
+### Statement of the business task:
+
+To understand how Casual Riders and Annual Members use Cyclistic bikes differently, and to identify trends that could inform the design of a new marketing strategy aimed at converting Casual Riders into Annual Members. The goal is to maximise the number of annual memberships, which Cyclistic's finance analysts have concluded are much more profitable than Casual Riders. The recommendations must be backed up with compelling data insights and professional data visualisations to secure approval from Cyclistic executives.
+
+
+# 2. Prepare
+
+* The dataset is downloaded from this [link](https://divvy-tripdata.s3.amazonaws.com/index.html).
+* The data for the year 2022 (January-December) will be used for the analysis.
+* The data is organised in CSV files, with each file containing information about bike trips taken in a particular month for a particular year.
+* It is possible that there could be issues with bias in the data, depending on how the data was collected and processed. ROCCC stands for reliable, original, comprehensive, current and cited, which are criteria for evaluating data quality. Without a detailed analysis, it's difficult to determine whether the data meets these criteria.
+* The data has been made available by Motivate International Inc. under this [license](https://ride.divvybikes.com/data-license-agreement) to the data's license.
+* The data will be verified for its integrity by checking the data for completeness, consistency, and accuracy. Additionally, it is important to understand the methodology used to collect and process the data to ensure that it is reliable.
+* This data can be used to analyse bike usage patterns in a particular city and identify trends and patterns over time.
+* It is possible that there could be problems with the data, such as missing or inaccurate information. Hence, it will be carefully analysed to identify and address any potential issues.
+
+
+# 3. Process
+
+The libraries and dataset are loaded in RStudio environment and the data is prepared for analysis by doing necessary cleaning, manipulation, and transformation.
+
+### Loading necessary packages
+
+```{r}
+install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+library(tidyverse)
+install.packages("lubridate", repos = "http://cran.us.r-project.org")
+library(lubridate)
+install.packages("dplyr", repos = "http://cran.us.r-project.org")
+library(dplyr)
+install.packages("readr", repos = "http://cran.us.r-project.org")
+library(readr)
+install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+library(ggplot2)
+install.packages("tiydr", repos = "http://cran.us.r-project.org")
+library(tidyr)
+install.packages("janitor", repos = "http://cran.us.r-project.org")
+library(janitor)
+install.packages("ggmap", repos = "http://cran.us.r-project.org")
+library(ggmap)
+install.packages("geosphere", repos = "http://cran.us.r-project.org")
+library(geosphere)
+install.packages("modeest", repos = "http://cran.us.r-project.org")
+library("modeest")
+```
+
+### Loading the data
+
+```{r}
+Jan_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202201-divvy-tripdata.csv")
+Feb_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202202-divvy-tripdata.csv")
+Mar_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202203-divvy-tripdata.csv")
+Apr_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202204-divvy-tripdata.csv")
+May_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202205-divvy-tripdata.csv")
+Jun_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202206-divvy-tripdata.csv")
+Jul_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202207-divvy-tripdata.csv")
+Aug_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202208-divvy-tripdata.csv")
+Sep_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202209-divvy-tripdata.csv")
+Oct_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202210-divvy-tripdata.csv")
+Nov_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202211-divvy-tripdata.csv")
+Dec_2022 <- read.csv("C:/Users/arpit/OneDrive/Desktop/Projects/Cyclistic Bike Share Case Study/Dataset/202212-divvy-tripdata.csv")
+```
+
+### Combining the data into one dataframe
+
+```{r}
+df <- rbind(Jan_2022, Feb_2022, Mar_2022, Apr_2022, May_2022, Jun_2022, 
+            Jul_2022, Aug_2022, Sep_2022, Oct_2022, Nov_2022, Dec_2022)
+```
+
+Viewing the first few rows of the data
+
+```{r}
+head(df)
+```
+
+Viewing the structure of the data
+
+```{r}
+str(df)
+```
+
+### Cleaning the data
+
+Checking for null values in the dataset for columns having string data type and replacing them with mode values
+
+```{r}
+cols_to_check <- c("ride_id", "rideable_type", "started_at", "ended_at", "start_station_name",
+                    "start_station_id", "end_station_name", "end_station_id", "member_casual")
+```
+                    
+```{r}
+for (col in cols_to_check) {
+  mode_val <- names(sort(table(df[[col]], exclude = NA), decreasing = TRUE))[1]
+  df[[col]][is.na(df[[col]])] <- mode_val
+}
+```
+                    
+Checking for null values in the dataset for columns having numerical data type and replacing them with mean values
+
+```{r}
+cols_to_check <- c("start_lat", "start_lng", "end_lat", "end_lng")
+```
+
+```{r}
+for (col in cols_to_check) {
+  if (sum(is.na(df[[col]])) > 0) {
+    df[[col]] <- replace_na(df[[col]], modeest::mfv(df[[col]]))
+  }
+}
+```
+
+Handling the start_station_name variable having empty string values by replacing them with "NA"
+
+```{r}
+df %>%
+  group_by(start_lat, start_lng) %>% 
+  mutate(start_station_name = na_if(start_station_name, "")) %>% 
+  fill(start_station_name)
+```
+
+Handling the end_station_name variable having empty string values by replacing them with "NA"
+
+```{r}
+df %>%
+    group_by(end_lat, end_lng) %>% 
+    mutate(end_station_name = na_if(end_station_name, "")) %>% 
+    fill(end_station_name)
+```
+
+```{r}
+head(df)
+```
+
+Additional data cleaning by creating new columns by extracting data from existing columns and bringing them in the correct format
+
+```{r}
+df_cleaned <- df %>%
+  mutate(start_time = ymd_hms(started_at),
+         end_time = ymd_hms(ended_at),
+         start_hour = hour(start_time),
+         end_hour = hour(end_time),
+         start_day = wday(start_time, label = TRUE),
+         end_day = wday(end_time, label = TRUE),
+         start_month = month(start_time, label = TRUE),
+         end_month = month(end_time, label = TRUE),
+         ride_length = as.numeric(difftime(end_time, start_time, units = "mins")),
+         ride_length_bucket = case_when(ride_length < 10 ~ "< 10",
+                                        ride_length < 20 ~ "10-20",
+                                        ride_length < 30 ~ "20-30",
+                                        ride_length < 45 ~ "30-45",
+                                        ride_length < 60 ~ "45-60",
+                                        ride_length < 90 ~ "60-90",
+                                        TRUE ~ "90+"),
+         member_casual = case_when(member_casual == "member" ~ "Annual Member",
+                                   member_casual == "casual" ~ "Casual Rider"))
+```
+
+Making the ride_length and the ride_Id consistent: Some ride length durations might be negative, meaning the start time may exceed the end time, hence they have been filtered out. Also, duplicate Ride IDs have been filtered out.
+
+```{r}
+df_cleaned <- filter(df_cleaned, ride_length > 0 & !duplicated(ride_id))
+```
+
+Adding ride distance in km using latitude and longitude data
+
+```{r}
+df_cleaned$ride_distance <- distGeo(matrix(c(df_cleaned$start_lng, df_cleaned$start_lat), ncol = 2), matrix(c(df_cleaned$end_lng, df_cleaned$end_lat), ncol = 2))
+df_cleaned <- df_cleaned %>% filter(ride_distance > 0)
+df_cleaned$ride_distance <- df_cleaned$ride_distance/1000 #distance in km
+```
+
+Dropping the variables not required in this analysis
+
+```{r}
+df_cleaned <- subset(df_cleaned, select = -c(started_at,ended_at,start_station_id,end_station_id))
+```
+
+```{r}
+head(df_cleaned)
+```
+
+# 4. Analyse
+
+### Descriptive Summary of different variables
+
+```{r}
+summary(df_cleaned)
+```
+
+### Creating a variable for summary statistics by user type 
+
+```{r}
+ride_summary <- df_cleaned %>%
+  group_by(member_casual) %>%
+  summarize(total_rides = n(), 
+            percentage_rides = (n() / nrow(df_cleaned)) * 100,
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance))
+ride_summary
+```
+
+* Annual Members take more number of rides as compared to the Casual Riders and account for almost 60% of the rides.
+* Casual Riders use bikes for a longer duration on an average as compared to the Annual Members.
+* Average Ride Distance is approximately same for both the type of users.
+
+### Creating a variable for ride summary by user type for different months of the Year 2022
+
+```{r}
+ride_month_summary <- df_cleaned %>%
+  group_by(member_casual, start_month) %>%
+  summarize(total_rides = n(),
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup()
+ride_month_summary
+```
+
+* Both type of users took most rides between May-October and least rides between December-February.
+* Average Ride Distance has stayed between 1.8-2.5 Km for both type of users.
+* Average Ride Length has been between 10.4-13.6 Minutes for Annual Members, whereas it has been between 13.3-24.6 Minutes for Casual Riders.
+
+### Creating a variable for ride summary by user type for different days of the week
+
+```{r}
+ride_day_summary <- df_cleaned %>%
+  group_by(member_casual, start_day) %>%
+  summarize(total_rides = n(),
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup()
+ride_day_summary
+```
+
+* Annual Members took most rides during weekdays and least on weekends.
+* On the contrary, Casual Riders took must rides on weekends and least during the weekdays.
+* Average Ride Length has been higher for both type of users on weekends as compared to those on weekdays.
+* There is not much variation in the Average Ride Distance among the two user types.
+
+### Creating a variable for ride summary by user type for different hours in a day
+
+```{r}
+ride_hour_summary <- df_cleaned %>%
+  group_by(member_casual, start_hour) %>%
+  summarize(total_rides = n(),
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup()
+ride_hour_summary
+```
+
+* Annual Members took most rides between 7am-9pm.
+* Casual Riders took most rides between 11am-8pm.
+
+### Creating a variable summarising by type of ride and user type 
+
+```{r}
+ride_type_summary <- df_cleaned %>%
+  group_by(rideable_type, member_casual) %>%
+  summarize(total_rides = n(), 
+            percentage_rides = (n() / nrow(df_cleaned)) * 100,
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>% 
+  ungroup
+ride_type_summary
+```
+
+* Annual Members used Classic Bikes more accounting for almost 31%.
+* Casual Riders used Electric Bikes more accounting for almost 29%.
+* Docked Bikes were used only by Casual Riders that too in a very less proportion (2.7%).
+
+### Creating a variable summarising by type of ride for different months of the Year 2022
+
+```{r}
+ride_type_month_summary <- df_cleaned %>%
+  group_by(rideable_type, start_month) %>%
+  summarize(total_rides = n(),
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup()
+ride_type_month_summary
+```
+
+* All three Types of Bikes were used the most between May-October and least between December-February.
+* Average Ride Length for Docked Bikes is much higher than that of Classic and Electric Bikes.
+
+### Creating a variable summarising by user type and ride bucket 
+
+```{r}
+ride_bucket_summary <- df_cleaned %>%
+  group_by(member_casual, ride_length_bucket) %>%
+  summarize(total_rides = n(),
+            percentage_rides = (n() / nrow(df_cleaned)) * 100,
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup()
+ride_bucket_summary
+```
+
+* Annual Members took 33% of rides and Casual Riders took 15% of rides which lasted for less than 10 minutes. 
+* For both the type of users, least number of rides lasted for >90 minutes duration.
+
+### Creating a variable summarising by number of rides for different start stations 
+
+```{r}
+df_cleaned$start_station_name[df_cleaned$start_station_name == ""] <- NA
+ride_start_stations <- df_cleaned %>% drop_na(start_station_name) %>% 
+  group_by(start_station_name) %>%
+  summarize(total_rides = n()) %>% 
+  arrange(desc(total_rides))
+ride_start_stations
+```
+
+* Most rides started from Streeter Dr & Grand Ave station.
+* Least rides started from Komensky Ave & 59th St station.
+
+### Creating a variable summarising by number of rides for different end stations 
+
+```{r}
+df_cleaned$end_station_name[df_cleaned$end_station_name == ""] <- NA
+ride_end_stations <- df_cleaned %>% drop_na(end_station_name) %>% 
+  group_by(end_station_name) %>%
+  summarize(total_rides = n()) %>% 
+  arrange(desc(total_rides))
+ride_end_stations
+```
+
+* Most rides ended at Streeter Dr & Grand Ave station.
+* Least rides ended at Altgeld Gardens station.
+
+### Creating a new dataframe with the start station, end station, and number of rides between each pair
+
+```{r}
+station_pairs <- df_cleaned %>% drop_na(start_station_name, end_station_name) %>% 
+  group_by(start_station_name, end_station_name) %>%
+  summarize(total_rides = n(),
+            avg_ride_length = mean(ride_length),
+            avg_ride_distance = mean(ride_distance), .groups = 'drop') %>%
+  ungroup() %>%
+  filter(total_rides >= 50) %>%
+  arrange(desc(total_rides))
+station_pairs
+```
+
+* Most rides took place between Ellis Ave & 60th St station and University Ave & 57th St station.
+* Least rides took place between Clark St & Armitage Ave station and Lincoln Ave & Fullerton Ave station.
+
+
+# 5. Share
+
+### Creating a bar chart for number of rides by user type
+
+```{r}
+ggplot(ride_summary, aes(x = member_casual, y = total_rides, fill = member_casual)) +
+  geom_col() +
+  labs(title = "Number of Rides by User Type",
+       x = "User Type",
+       y = "Number of Rides")
+```
+
+* Annual Members took more rides than the Casual Riders.
+
+### Creating a pie chart for Percentage of Rides by user type
+
+```{r}
+# Creating a basic bar
+pie = ggplot(ride_summary, aes(x="", y=percentage_rides, fill=member_casual)) + geom_bar(stat="identity", width=1)
+ 
+# Converting to pie (polar coordinates) and add labels
+pie = pie + coord_polar("y", start=0)
+ 
+# Removing labels and add title
+pie = pie + labs(x = NULL, y = NULL, fill = NULL, title = "Percentage of Rides by User Type")
+
+# Tidying up the theme
+pie = pie + theme_classic() + theme(axis.line = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5))
+pie
+```
+
+* Annual Members accounted for more than 50% of the rides. 
+
+### Creating a bar chart for average ride length by user type
+
+```{r}
+ggplot(ride_summary, aes(x = member_casual, y = avg_ride_length, fill = member_casual)) +
+  geom_col() +
+  labs(title = "Average Ride Length by User Type",
+       x = "User Type",
+       y = "Average Ride Length (Minutes)")
+```
+
+* Average Ride Length for Casual Riders is much higher than that of Annual Members.
+
+### Creating a bar chart for average ride distance by user type
+
+```{r}
+ggplot(ride_summary, aes(x = member_casual, y = avg_ride_distance, fill = member_casual)) +
+  geom_col() +
+  labs(title = "Average Ride Distance by User Type",
+       x = "User Type",
+       y = "Average Ride Distance (Km)")
+```
+
+* Both type of users travel about the same Average Distance.
+* This similarity could be possible due to the fact that Annual Members take (same ride time) rides throughout the week, but Casual Riders took rides mostly on weekends with a higher Ride Length.
+
+### Creating a Bar chart for Number of rides by month for each user type
+
+```{r}
+ggplot(ride_month_summary, aes(x = start_month, y = total_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Month", y = "Number of Rides", title = " Number of Rides by User Type for different Months") 
+```
+
+* Maximum Rides were taken during May-October by both type of users.
+* Least Rides were taken in the months of January, February and December by both type of users. This might be due to the cold weather in Winter season.
+
+### Creating a Bar chart for average ride length by month for each user type
+
+```{r}
+ggplot(ride_month_summary, aes(x = start_month, y = avg_ride_length, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Month", y = "Average Ride Length (Minutes)", title = "Average Ride Length by User Type for different Months") 
+```
+
+* Average Ride Length is same throughout the year (< 15 Minutes) for Annual Members.
+* Average Ride Length is between 12.5-25 Minutes throughout the year for Casual Members.
+* Average Ride Length is highest in the months of January, March and May and decreases from July-December for Casual Members.
+* In the months of January and February, Average Ride Length is higher but Number of Rides are lowest as compared to other months.
+
+### Creating a Bar chart for average ride distance by month for each user type
+
+```{r}
+ggplot(ride_month_summary, aes(x = start_month, y = avg_ride_distance, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Month", y = "Average Ride Distance (Km)", title = "Average Ride Distance by User Type for different Months")
+```
+
+* Average Ride Distance is high during March-September, and low in January, February and December for Casual Riders.
+* Average Ride Distance is high during May-September and November, and is low in January, February and December for Annual Members.  
+
+### Creating a Bar chart for Number of rides by day for each user type
+
+```{r}
+ggplot(ride_day_summary, aes(x = start_day, y = total_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Day", y = "Number of Rides", title = " Number of Rides by User Type for different Days")
+```
+
+* Annual Members took most rides during weekdays and least during weekends.
+* Casual Riders took most rides during weekends and least during weekdays.
+
+### Creating a Bar chart for average ride length by day for each user type
+
+```{r}
+ggplot(ride_day_summary, aes(x = start_day, y = avg_ride_length, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Day", y = "Average Ride Length (Minutes)", title = " Average Ride Length by User Type for different Days")
+```
+
+* Average Ride Length follows the same pattern as the Number of Rides for both type of users.
+* For Annual Members, Average Ride Length is about the same throughout the week (< 15 Minutes).
+
+
+### Creating a Bar chart for average ride distance by day for each user type
+
+```{r}
+ggplot(ride_day_summary, aes(x = start_day, y = avg_ride_distance, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Day", y = "Average Ride Distance (Km)", title = "Average Ride Distance by User Type for different Days")
+```
+
+* Average Ride Distance is approximately same and consistent throughout the week for both type of users.
+
+### Creating a Histogram for Number of rides by hour for each user type
+
+```{r}
+df_cleaned %>%
+  ggplot(aes(start_hour, fill= member_casual)) +
+  labs(x="Hour of the Day", y = "Number of Rides", title="Number of Rides by Hour") +
+  geom_bar()
+```
+
+* Number of Rides for both type of users increased from 5am-5pm and decreased from 5pm-5am the next day.
+* Number of Rides were highest between 2pm-7pm for both type of users.
+
+### Creating Histograms for Number of rides by hour and each day of the week by each user type
+
+```{r fig.align="center", echo = FALSE, fig.width = 15}
+df_cleaned %>%
+  ggplot(aes(start_hour, fill=member_casual)) +
+  geom_bar() +
+  labs(x="Hour of the day", y = "Number of Rides", title="Number of Rides by Hour for different Days of the Week") +
+  facet_wrap(~ start_day)
+```
+
+* There is a lot of diferrence between the weekdays and weekends. 
+* There is a big increase of volume in the weekdays between 5am to 10am and another volume increase from 3pm to 7pm. 
+* It can be hypothesized that Annual Members use the bikes as a part of daily routine like going to work (same behaviour throughout the weekdays) and go back from work (5pm-7pm).
+* Weekends are completely different for Annual members and Casual Riders, as on Friday, Saturday and Sunday, there is huge peak in volume for the Casual Riders, and it can be hypothesized that the Casual Riders mostly use bike share for leisure activity on the weekends.
+
+### Creating a bar chart for number of rides as per the ride length bucket for each user type
+
+```{r}
+ggplot(ride_bucket_summary, aes(x = ride_length_bucket, y = total_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Ride Length Bucket", y = "Number of Rides", title = "Number of Rides by Ride Length Bucket for each User Type") 
+```
+
+* Number of Rides are highest for rides lasting < 10 Minutes and lowest for rides lasting > 90 Minutes.
+* Both the type of users usually use bikes for shorter durations.
+
+### Creating a bar chart for average ride length as per the ride length bucket for each user type
+
+```{r}
+ggplot(ride_bucket_summary, aes(x = ride_length_bucket, y = avg_ride_length, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Ride Length Bucket", y = "Average Ride Length (Minutes)", title = "Average Ride Length by Ride Length Bucket for each User Type")
+```
+
+* Average Ride Length for both type of users is almost same for each ride bucket except for the rides > 90 Minutes.
+
+### Creating a bar chart for average ride distance as per the ride length bucket for each user type
+
+```{r}
+ggplot(ride_bucket_summary, aes(x = ride_length_bucket, y = avg_ride_distance, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(x = "Ride Length Bucket", y = "Average Ride Distance (Km)", title = "Average Ride Distance by Ride Length Bucket for each User Type")
+```
+
+* Average Ride Distance is higher for the rides that lasted 30-45 Minutes and 45-60 Minutes. 
+
+### Creating a bar chart for number of rides by type of ride for each user type
+
+```{r}
+ggplot(df_cleaned, aes(x=rideable_type, fill=member_casual)) +
+  geom_bar() +
+  labs(x = "Bike Type", y = "Number of Rides", title = "Number of Rides by Bike Type for each User Type")
+```
+
+* Classic Bikes are used mostly by Annual Members whereas Casual Riders prefer Electric Bikes more.
+* A few Docked Bikes are used only by Casual Riders.
+
+### Creating a bar chart for most number of rides from top 5 start stations
+
+```{r fig.align="center", echo = FALSE, fig.width = 12}
+head(ride_start_stations, 5) %>% arrange(desc(total_rides)) %>%
+  ggplot(ride_start_stations, mapping= aes(x= start_station_name, y = total_rides, fill = start_station_name)) + 
+  geom_col() + 
+  labs(x="Start Station Name", y = "Number of Rides", title="Top 5 Start Stations with most Number of Rides") +
+  coord_flip()
+```
+
+* Streeter Dr & Grand Ave is the most used Start Station.
+
+### Creating a bar chart for most number of rides from top 5 end stations
+
+```{r fig.align="center", echo = FALSE, fig.width = 12}
+head(ride_end_stations, 5) %>% arrange(desc(total_rides)) %>%
+  ggplot(ride_end_stations, mapping= aes(x= end_station_name, y = total_rides, fill = end_station_name)) + 
+  geom_col() + 
+  labs(x="End Station Name", y = "Number of Rides", title="Top 5 End Stations with most Number of Rides") +
+  coord_flip()
+```
+
+* Streeter Dr & Grand Ave is the most used End Station.
+
+### Creating and plotting maps using the coordinates data
+
+Adding a new data frame only for the most popular routes > 200 rides
+
+```{r}
+coordinates_df <- df_cleaned %>% 
+  filter(start_lng != end_lng & start_lat != end_lat) %>%
+  group_by(start_lng, start_lat, end_lng, end_lat, member_casual, rideable_type) %>%
+  summarise(total_rides = n(), .groups="drop") %>%
+  filter(total_rides > 200)
+coordinates_df
+```
+
+Creating two different data frames depending on user type
+
+```{r}
+casual_riders <- coordinates_df %>% filter(member_casual == "Casual Rider")
+member_riders <- coordinates_df %>% filter(member_casual == "Annual Member")
+```
+
+Setting up ggmap and map of Chicago (bbox, stamen map)
+
+```{r}
+chicago <- c(left = -87.700424, bottom = 41.790769, right = -87.554855, top = 41.990119)
+chicago_map <- get_stamenmap(bbox = chicago, zoom = 12, maptype = "terrain")
+```
+
+Map of Casual Riders
+
+```{r}
+ggmap(chicago_map,darken = c(0.1, "white")) +
+  geom_point(casual_riders, mapping = aes(x = start_lng, y = start_lat, color=rideable_type), size = 2) +
+  coord_fixed(0.8) +
+  labs(title = "Most used routes by Casual riders",x=NULL,y=NULL) +
+  theme(legend.position="none")
+```
+
+* Casual Riders are mostly located near the coast, probabably they might be using bikes for leisure, tourist or sightseeing related rides.
+
+Map of Annual Members
+
+```{r}
+ggmap(chicago_map,darken = c(0.1, "white")) +
+   geom_point(member_riders, mapping = aes(x = start_lng, y = start_lat, color=rideable_type), size = 2) +
+   coord_fixed(0.8) +
+   labs(title = "Most used routes by Casual riders",x=NULL,y=NULL) +
+   theme(legend.position="none")
+```
+
+* Annual Members mostly use bikes all over the city including main city area and outside main center. It can be hypothesized that they usually travel for work purpose.
+
+### Main insights and conclusions
+
+* Annual Members hold the bigger proportion of the Rotal Rides (60%).
+* In all months there are more Annual Members users than the Casual Riders.
+* For the Casual Riders, the biggest volume of data is on the weekends.
+* There is a bigger volume of both type of users from the afternoon till the evening.
+* It could be possible that the Annual Members use bikes for work purpose, this information can be backed by their bike usage in the colder months, where there is a significant drop in the number of Casual Riders in those months.
+* Average Ride Distance is higher for the rides that lasted 30-45 Minutes and 45-60 Minutes. 
+* Number of Rides are highest for rides lasting < 10 Minutes and lowest for rides lasting > 90 Minutes.
+* Both the type of users usually use bikes for shorter durations.
+
+### Difference in Bike usage pattern between Annual Members and Casual Riders
+
+* Members have the bigger volume of data, except on Saturday and Sunday. On the weekends, Casuals Riders have the most data points.
+* Casuals Riders have more Average Ride Length than the Annual Members. Average Ride Length of the Annual Members are mostly same and there is a slight increase during weekends.
+* Annual Members have more preference for Classic Bikes, whereas Electric Bikes are mostly preferred by the Casual Riders.
+* Casual Members have a more fixed use for bikes for routine activities, Whereas Casual Riders' usage is different, mostly for activities during the weekends.
+* Casual Member spend time near the coastal area, whereas Annual Members are scattered throughout the city.
+
+# 6. Act
+
+### Weekend Membership
+
+According to the findings, most of the Casual Riders prefer riding on weekends, thus a weekend membership can attract new Casual Riders as well as the existing ones and also the weekend membership benefits can be used to influence them for extended memberships. Thisweekend-only membership can be provided at a much lower price than that of a full annual membership.
+
+### Marketing Campaigns
+
+Marketing Campaigns can be created which can be sent via email, or advertisements on the most used Start and End Stations as per the findings, explaining why Annual Membership is beneficial. Campaigns should be carried out during the peak months of the year. Sporadic membership discount offers cna be prpvided to Casual Riders during end Summer, Autumn and starting Winter months.
+
+The busiest time of the year for users is from mid of the 2nd quarter to the end of 3rd quarter of the year when rides are on its peak for both type of users. This is the best time for promotional activities and campaigns. Those can be conducted nearby riding hotspots. 
+
+### Discounts and Riding Competitions 
+
+Cyclistic can organise bike riding competitions with exciting prizes and can offer discounted yearly memberships to the participants.
+
+Coupons and discounts could be handed out along with the annual subscription / weekend-only membership for the usage of Electric Bikes targeting Casual Riders. Also increasing the number of Electric Bikes while reducing classic bikes if electric bike costs more for the pass, this can be beneficial for the company (As Electric Bikes are already in the trend and usage is good as per the data).
+
+### Extended scope of Analysis
+
+All Ride IDs are unique, hence it cannot be concluded if the same rider took several rides. More rider data is needed for further analysis.
+
+Additonal data that could expand the scope of this analysis:
+
+* Pricing details for Annual Members and Casual Riders could be sought - Based on this data, it might be possible to optimize the cost structure for Casual Riders or provide discounts without affecting the profit margin.
+* Address/neighborhood details of users to investigate if there are any location specific parameters that encourage membership.
+* If it can be determined whether any user is a recurring bike user or not, using their payment information or any other personal identification.
